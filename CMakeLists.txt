@@ -119,6 +119,7 @@ target_link_libraries(raspicam_node
 )
 target_link_libraries(main_node
    ${catkin_LIBRARIES}
+   serial
 )
 
 #############
