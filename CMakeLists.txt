@@ -105,6 +105,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(raspicam_node src/raspicam_node.cpp)
+add_executable(main_node src/main_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -115,6 +116,9 @@ target_link_libraries(raspicam_node
    ${catkin_LIBRARIES}
    ${OpenCV_LIBS}
    raspicam_cv raspicam
+)
+target_link_libraries(main_node
+   ${catkin_LIBRARIES}
 )
 
 #############
