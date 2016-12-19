@@ -1,62 +1,59 @@
-#include <stdio.h>
 #include <iostream>
+#include <cstdlib>
 #include <fstream>
-#include "ros/ros.h"
-#include "sensor_msgs/Image.h"
+#include "raspicam_cv.h"
+#include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/CompressedImage.h>
+#include <mars_msgs/mars_camera.h>
 
+#include <opencv2/opencv.hpp>
 
-#include "raspicam.h"
 using namespace std;
-void saveImage ( string filepath,unsigned char *data,raspicam::RaspiCam &Camera ) {
-    std::ofstream outFile ( filepath.c_str(),std::ios::binary );
-    if ( Camera.getFormat()==raspicam::RASPICAM_FORMAT_BGR ||  Camera.getFormat()==raspicam::RASPICAM_FORMAT_RGB ) {
-        outFile<<"P6\n";
-    } else if ( Camera.getFormat()==raspicam::RASPICAM_FORMAT_GRAY ) {
-        outFile<<"P5\n";
-    } else if ( Camera.getFormat()==raspicam::RASPICAM_FORMAT_YUV420 ) { //made up format
-        outFile<<"P7\n";
-    }
-    outFile<<Camera.getWidth() <<" "<<Camera.getHeight() <<" 255\n";
-    outFile.write ( ( char* ) data,Camera.getImageBufferSize() );
-}
+using namespace cv;
 
-int main(int argc, char** argv)
-{
+int main ( int argc,char **argv ) {
+
 	ros::init(argc,argv,"raspicam");
 	ros::NodeHandle n;
-	ros::Publisher raspicam_pub = n.advertise<sensor_msgs::Image>("raspicam",1000);
-	ros::Rate loop_rate(1);
+	ros::Publisher image_pub = n.advertise<sensor_msgs::CompressedImage>(
+		"raspicam",1000);
+	ros::NodeHandle private_node_handle("~");
+	int framerate;
+	private_node_handle.param("framerate", framerate, int(10));
+	ros::Rate loop_rate(framerate);
 
-	raspicam::RaspiCam Camera;
+	raspicam::RaspiCam_Cv Camera;
 	cout<<"Connecting to camera"<<endl;
-
-        Camera.setWidth( 1280 );
-	Camera.setHeight(960);
-	Camera.setBrightness(50);
-	Camera.setSharpness(0);
-	Camera.setContrast(0);
-	Camera.setSaturation(0);
-	Camera.setShutterSpeed(0);
-	Camera.setISO(400);
-	Camera.setExposureCompensation(0);
-	Camera.setExposure(raspicam::RASPICAM_EXPOSURE_AUTO);
-	Camera.setAWB_RB(1,1);
-
 	if ( !Camera.open() ) {
 		cerr<<"Error opening camera"<<endl;
 		return -1;
 	}
-	cout<<"Connected to camera ="<<Camera.getId() <<" bufs="<<Camera.getImageBufferSize( )<<endl;
-	unsigned char *data=new unsigned char[  Camera.getImageBufferSize( )];
+	cout<<"Connected to camera ="<<Camera.getId() <<endl;
+	cv_bridge::CvImage cv_image;
+	cv_image.encoding = "bgr8";
+	sensor_msgs::CompressedImage image_msg;
+	image_msg.format = std::string("jpeg");
+	int i=0;
+	cv::Size cameraResolution(2592,1944);
+
+	int count = 0;
+	vector<int> compression_params;
+	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+	compression_params.push_back(50);
+	cv::Size sz(324*2,243*2);
 	while(ros::ok()) 
 	{
 		Camera.grab();
-		Camera.retrieve ( data );
-		//saveImage ( "image.jpg",data,Camera );
-		sensor_msgs::Image img_msg;
-		raspicam_pub.publish(img_msg);
-	}
+		Camera.retrieve ( cv_image.image );
+		cv::resize(cv_image.image,cv_image.image,sz);
+		cv::imencode(".jpg",cv_image.image, image_msg.data, 
+				compression_params);
+		image_pub.publish(image_msg);
 
+		ros::spinOnce();
+		loop_rate.sleep();
+	}
 	Camera.release();
 	return 0;
 }

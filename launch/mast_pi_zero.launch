@@ -4,6 +4,9 @@
   <group ns="$(arg name)">
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <node name="raspicam" pkg="mast_pi_zero" type="raspicam_node"/>
-    <node name="main" pkg="mast_pi_zero" type="main_node"/>
+    <node name="main" pkg="mast_pi_zero" type="main_node">
+      <param name="baudrate" value="1000000" />
+      <param name="port" value="/dev/ttyAMA0" />
+    </node>
   </group>
 </launch>

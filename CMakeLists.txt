@@ -106,6 +106,7 @@ include_directories(
 ## Declare a cpp executable
 add_executable(raspicam_node src/raspicam_node.cpp)
 add_executable(main_node src/main_node.cpp)
+#add_executable(motor_node src/motor_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -121,6 +122,9 @@ target_link_libraries(main_node
    ${catkin_LIBRARIES}
    serial
 )
+#target_link_libraries(motor_node
+#   ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##
