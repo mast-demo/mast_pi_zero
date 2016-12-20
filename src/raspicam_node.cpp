@@ -17,10 +17,12 @@ int main ( int argc,char **argv ) {
 	ros::init(argc,argv,"raspicam");
 	ros::NodeHandle n;
 	ros::Publisher image_pub = n.advertise<sensor_msgs::CompressedImage>(
-		"raspicam",1000);
+		"raspicam/compressed",1000);
 	ros::NodeHandle private_node_handle("~");
 	int framerate;
+	int quality;
 	private_node_handle.param("framerate", framerate, int(10));
+	private_node_handle.param("quality", quality, int(50));
 	ros::Rate loop_rate(framerate);
 
 	raspicam::RaspiCam_Cv Camera;
@@ -31,7 +33,7 @@ int main ( int argc,char **argv ) {
 	}
 	cout<<"Connected to camera ="<<Camera.getId() <<endl;
 	cv_bridge::CvImage cv_image;
-	cv_image.encoding = "bgr8";
+	cv_image.encoding = "rgb8";
 	sensor_msgs::CompressedImage image_msg;
 	image_msg.format = std::string("jpeg");
 	int i=0;
@@ -40,13 +42,14 @@ int main ( int argc,char **argv ) {
 	int count = 0;
 	vector<int> compression_params;
 	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-	compression_params.push_back(50);
+	compression_params.push_back(quality);
 	cv::Size sz(324*2,243*2);
 	while(ros::ok()) 
 	{
 		Camera.grab();
 		Camera.retrieve ( cv_image.image );
-		cv::resize(cv_image.image,cv_image.image,sz);
+		//cv::resize(cv_image.image,cv_image.image,sz);
+		cv::cvtColor(cv_image.image, cv_image.image, COLOR_BGR2RGB);
 		cv::imencode(".jpg",cv_image.image, image_msg.data, 
 				compression_params);
 		image_pub.publish(image_msg);

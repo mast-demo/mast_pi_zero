@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 	private_node_handle.param("port", port, string("/dev/ttyAMA0"));
 	private_node_handle.param("baudrate", baudrate, int(1000000));
 
-	ros::Subscriber camera_sub = n.subscribe("raspicam",1000, 
+	ros::Subscriber camera_sub = n.subscribe("raspicam/compressed",1000, 
 		cameraCallback);
 
 	cout << "Opening " << port << " for serial com at " << baudrate << " baud\n";
