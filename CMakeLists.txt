@@ -106,6 +106,7 @@ include_directories(
 ## Declare a cpp executable
 add_executable(raspicam_node src/raspicam_node.cpp)
 add_executable(main_node src/main_node.cpp)
+add_executable(serial_node src/serial_node.cpp)
 #add_executable(motor_node src/motor_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -119,6 +120,10 @@ target_link_libraries(raspicam_node
    raspicam_cv raspicam
 )
 target_link_libraries(main_node
+   ${catkin_LIBRARIES}
+   serial
+)
+target_link_libraries(serial_node
    ${catkin_LIBRARIES}
    serial
 )

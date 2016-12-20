@@ -1,3 +1,12 @@
+/************************
+node to interface camera
+
+tried to used raspicam_node whcih should be faster, but could 
+not compile all of the dependencies.  Will try to improve later.
+
+currently very slow and CU intensive due to openCV jpeg compression.
+***********************/
+
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -19,9 +28,9 @@ int main ( int argc,char **argv ) {
 	ros::Publisher image_pub = n.advertise<sensor_msgs::CompressedImage>(
 		"raspicam/compressed",1000);
 	ros::NodeHandle private_node_handle("~");
-	int framerate;
+	float framerate;
 	int quality;
-	private_node_handle.param("framerate", framerate, int(10));
+	private_node_handle.param("framerate", framerate, float(10));
 	private_node_handle.param("quality", quality, int(50));
 	ros::Rate loop_rate(framerate);
 
@@ -32,6 +41,7 @@ int main ( int argc,char **argv ) {
 		return -1;
 	}
 	cout<<"Connected to camera ="<<Camera.getId() <<endl;
+	cout << "Framerate = " << framerate << " quality = " << quality << endl;
 	cv_bridge::CvImage cv_image;
 	cv_image.encoding = "rgb8";
 	sensor_msgs::CompressedImage image_msg;
@@ -48,7 +58,7 @@ int main ( int argc,char **argv ) {
 	{
 		Camera.grab();
 		Camera.retrieve ( cv_image.image );
-		//cv::resize(cv_image.image,cv_image.image,sz);
+		cv::resize(cv_image.image,cv_image.image,sz);
 		cv::cvtColor(cv_image.image, cv_image.image, COLOR_BGR2RGB);
 		cv::imencode(".jpg",cv_image.image, image_msg.data, 
 				compression_params);

@@ -5,7 +5,9 @@
 # linear x is interpreted as % effort forward and backward
 # angular z is turn in place left and right
 # angular is ignored if linear is non-zero
-# commands expire aftwer watchdogCount seconds
+# commands expire after watchdogCount cycles
+#
+# cmd_vel has range of +/-1 so multiply by 100 to scale for pzm
 #
 
 import rospy
@@ -19,14 +21,14 @@ def callback(data):
 	#rospy.loginfo("callback: "+ str(data.linear.x))
 	global watchdogCount
 	watchdogCount = 5
-	if data.linear.x > 0.0:
-		pzm.forward(data.linear.x)
-	elif data.linear.x < 0.0:
-		pzm.reverse(-data.linear.x)
+	if data.linear.x > 0.01:
+		pzm.forward(data.linear.x * 100)
+	elif data.linear.x < -0.01:
+		pzm.reverse(-data.linear.x * 100)
 	elif data.angular.z > 0:
-		pzm.spinLeft(data.angular.z)
+		pzm.spinLeft(data.angular.z * 100)
 	elif data.angular.z < 0:
-		pzm.spinRight(-data.angular.z)
+		pzm.spinRight(-data.angular.z * 100)
 
 def timerCallback(event):
 	global watchdogCount
@@ -38,7 +40,7 @@ def timerCallback(event):
 def listener():
 	rospy.init_node('motor', anonymous=True)
 	rospy.Subscriber("cmd_vel", Twist, callback)
-	rospy.Timer(rospy.Duration(1), timerCallback)
+	rospy.Timer(rospy.Duration(0.1), timerCallback)
 	rospy.spin()
 
 if __name__ == '__main__':
