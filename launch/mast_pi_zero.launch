@@ -8,5 +8,6 @@
       <param name="baudrate" value="1000000" />
       <param name="port" value="/dev/ttyAMA0" />
     </node>
+    <node name="motor" pkg="mast_pi_zero" type="motor_node.py"/>
   </group>
 </launch>
