@@ -4,6 +4,18 @@ This should do all of the read adn write on the serial port
 
 currently subscribes to image and sends it out serial port
 also prints num bytes received
+
+create a very simple packet system
+<HEADER> (4 bytes) = 0xABCDEF56
+<LENGTH> (4 bytes) = number of total bytes including 12 for hdr, num, ftr
+<DATA>
+<FOOTER> (4 bytes) = 0xBAADF00D
+
+so serial looks for HEADER in stream. 
+ then reades LENGTH
+ then reads next LENGTH-8 bytes
+ then checks that next 4 byes are FOOTER
+
 ******************/
 
 #include <stdio.h>
@@ -37,7 +49,7 @@ int main(int argc, char** argv)
 	private_node_handle.param("port", port, string("/dev/ttyAMA0"));
 	private_node_handle.param("baudrate", baudrate, int(1000000));
 
-	ros::Subscriber camera_sub = n.subscribe("raspicam/compressed",1000, 
+	ros::Subscriber camera_sub = n.subscribe("camera/image/compressed",1000, 
 		cameraCallback);
 
 	cout << "Opening " << port << " for serial com at " << baudrate << " baud\n";
@@ -52,11 +64,13 @@ int main(int argc, char** argv)
 	}
 	vector<uint8_t> buffer(MAX_FRAME_SIZE);
 	size_t numBytes;
+	int bytesRemaining = 0;
+	int pktBytesReceived = 0;
 	while(ros::ok()) {
 		numBytes = serial_port->read(buffer, MAX_FRAME_SIZE);
-//		if(numBytes > 0) {
-			ROS_INFO_STREAM("serial read. " << numBytes << " bytes");
-//		}	
+		if(numBytes > 0) {
+			ROS_INFO_STREAM("Serial Rx " << numBytes << " bytes");
+		}
 		ros::spinOnce();	
 	}
 	return 0;
