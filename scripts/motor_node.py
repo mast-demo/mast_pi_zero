@@ -21,14 +21,22 @@ def callback(data):
 	#rospy.loginfo("callback: "+ str(data.linear.x))
 	global watchdogCount
 	watchdogCount = 5
+	if data.linear.x > 1.0:
+		data.linear.x = 1.0
+	elif data.linear.x < -1.0:
+		data.linear.x = -1.0
+	if data.angular.z > 1.0:
+		data.angular.z = 1.0
+	elif data.angular.z < -1.0:
+		data.angular.z = -1.0
 	if data.linear.x > 0.01:
-		pzm.forward(data.linear.x * 100)
+		pzm.forward(data.linear.x * 50)
 	elif data.linear.x < -0.01:
-		pzm.reverse(-data.linear.x * 100)
+		pzm.reverse(-data.linear.x * 50)
 	elif data.angular.z > 0:
-		pzm.spinLeft(data.angular.z * 100)
+		pzm.spinLeft(data.angular.z * 50)
 	elif data.angular.z < 0:
-		pzm.spinRight(-data.angular.z * 100)
+		pzm.spinRight(-data.angular.z * 50)
 
 def timerCallback(event):
 	global watchdogCount
