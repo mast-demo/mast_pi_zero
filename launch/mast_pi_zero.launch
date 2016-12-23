@@ -7,7 +7,7 @@
     <node name="main" pkg="mast_pi_zero" type="main_node"/>
 -->
     <node name="raspicam" pkg="raspicam" type="raspicam_node">
-      <param name="framerate" value="1"/>
+      <param name="framerate" value="5"/>
       <param name="quality" value="20"/>
       <param name="width" value="430"/>
       <param name="height" value="270"/>
