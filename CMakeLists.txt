@@ -81,7 +81,6 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES raspicam
   CATKIN_DEPENDS roscpp std_msgs cv_bridge
 #  DEPENDS system_lib
    DEPENDS OpenCV 
@@ -104,7 +103,6 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(raspicam_node src/raspicam_node.cpp)
 add_executable(main_node src/main_node.cpp)
 add_executable(serial_node src/serial_node.cpp)
 #add_executable(motor_node src/motor_node.cpp)
@@ -114,11 +112,6 @@ add_executable(serial_node src/serial_node.cpp)
 # add_dependencies(raspicam_node raspicam_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(raspicam_node
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBS}
-   raspicam_cv raspicam
-)
 target_link_libraries(main_node
    ${catkin_LIBRARIES}
    serial
