@@ -16,6 +16,7 @@
     <node name="serial" pkg="mast_pi_zero" type="serial_node" output="screen">
       <param name="baudrate" value="1000000" />
       <param name="port" value="/dev/ttyAMA0" />
+      <param name="skip" value="4" />
     </node>
     <node name="motor" pkg="mast_pi_zero" type="motor_node.py"/>
     <node name="start_camera" pkg="rosservice" type="rosservice" args="call --wait camera/start_capture"/>
