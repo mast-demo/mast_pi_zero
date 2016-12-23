@@ -34,16 +34,24 @@ serial::Serial *serial_port;
 #define MAX_IMAGE_SIZE 1000000
 uint32_t header=0xBEEFFACE;
 uint32_t footer=0xBAADF00D;
+// varible to say how many frames to skip in case bandwidth is limited
+int skipFrames = 0;
+// count of how many frames have been skiiped since last transmit
+int skipFrameCount = 0;
 
 void cameraCallback(const sensor_msgs::CompressedImage::ConstPtr& msg)
 {
-	ROS_INFO_STREAM("Transmiting image size = " << msg->data.size() << " bytes");
-	//	serial_port->write("Got an image");
-	uint32_t numBytes = msg->data.size()+12;
-	serial_port->write((uint8_t*)&header, 4);
-	serial_port->write((uint8_t*)&numBytes, 4);
-	serial_port->write(msg->data);
-	serial_port->write((uint8_t*)&footer, 4);
+	if(++skipFrameCount > skipFrames) {
+		skipFrameCount = 0;
+		ROS_INFO_STREAM("Transmiting image size = " << msg->data.size() << 
+			" bytes");
+		//	serial_port->write("Got an image");
+		uint32_t numBytes = msg->data.size()+12;
+		serial_port->write((uint8_t*)&header, 4);
+		serial_port->write((uint8_t*)&numBytes, 4);
+		serial_port->write(msg->data);
+		serial_port->write((uint8_t*)&footer, 4);
+	}
 }
 
 size_t pktBytesReceived = 0;
@@ -141,20 +149,20 @@ int collectData(void)
 	//ROS_INFO_STREAM("Serial Rx " << tmpPktCount << " bytes.  have "<< pktBytesReceived << " need " << imageSize << " remiaing " << bytesRemaining);
 	if(tmpPktCount > bytesRemaining) {
 		/*
-		for(int i=0;i<bytesRemaining;++i) {
-			imageBuffer.push_back(tmpPktBuffer[i]);
-		}
-		*/
+			 for(int i=0;i<bytesRemaining;++i) {
+			 imageBuffer.push_back(tmpPktBuffer[i]);
+			 }
+		 */
 		memcpy(&imageBuffer[pktBytesReceived-8], tmpPktBuffer, bytesRemaining);
 		removeBytes(bytesRemaining);
 		pktBytesReceived += bytesRemaining;
 		return findFooter();
 	} else {
 		/*
-		for(int i=0;i<tmpPktCount;++i) {
-			imageBuffer.push_back(tmpPktBuffer[i]);
-		}
-		*/
+			 for(int i=0;i<tmpPktCount;++i) {
+			 imageBuffer.push_back(tmpPktBuffer[i]);
+			 }
+		 */
 		memcpy(&imageBuffer[pktBytesReceived-8], tmpPktBuffer, tmpPktCount);
 		pktBytesReceived += tmpPktCount;
 		tmpPktCount=0;
@@ -181,7 +189,7 @@ int findFooter(void)
 			packetGood = true;
 		} else {
 			ROS_INFO_STREAM("footer invalid.  read "<< hex << val << 
-				" expected " << hex << footer << " pkt FAILED!");
+					" expected " << hex << footer << " pkt FAILED!");
 		}
 	}
 	pktBytesReceived=0;
@@ -233,6 +241,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle private_node_handle("~");
 	private_node_handle.param("port", port, string("/dev/ttyAMA0"));
 	private_node_handle.param("baudrate", baudrate, int(1000000));
+	private_node_handle.param("skip", skipFrames, int(0));
 
 	ros::Subscriber camera_sub = n.subscribe("camera/image/compressed",1000, 
 			cameraCallback);
