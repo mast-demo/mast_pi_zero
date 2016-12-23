@@ -13,7 +13,7 @@
       <param name="height" value="270"/>
     </node>
 
-    <node name="serial" pkg="mast_pi_zero" type="serial_node">
+    <node name="serial" pkg="mast_pi_zero" type="serial_node" output="screen">
       <param name="baudrate" value="1000000" />
       <param name="port" value="/dev/ttyAMA0" />
     </node>
