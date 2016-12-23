@@ -48,6 +48,7 @@ void cameraCallback(const sensor_msgs::CompressedImage::ConstPtr& msg)
 
 size_t pktBytesReceived = 0;
 uint32_t imageSize = 0;
+//vector<uint8_t>imageBuffer(MAX_IMAGE_SIZE);
 uint8_t imageBuffer[MAX_IMAGE_SIZE];
 uint8_t tmpPktBuffer[MAX_PKT_SIZE*2];
 size_t tmpPktCount = 0;
@@ -71,6 +72,11 @@ int findPktStart(void);
 int findImageSize(void);
 int collectData(void);
 int findFooter(void);
+int processPacket(void);
+/*
+	 removes <num> bytes from the serial buffer and shifts all others down
+	 not terribly efficient, but simple and reliable.
+ */
 void removeBytes(size_t num)
 {
 	memcpy(tmpPktBuffer, &tmpPktBuffer[num], tmpPktCount - num);
@@ -118,6 +124,7 @@ int findImageSize(void)
 			 and then remove those bytes and look for data
 		 */
 		imageSize = *(uint32_t*)tmpPktBuffer - 12;
+		//imageBuffer.clear();
 		//ROS_INFO_STREAM("image size = " << imageSize << " bytes");
 		pktBytesReceived+=4;
 		removeBytes(4);
@@ -133,11 +140,21 @@ int collectData(void)
 
 	//ROS_INFO_STREAM("Serial Rx " << tmpPktCount << " bytes.  have "<< pktBytesReceived << " need " << imageSize << " remiaing " << bytesRemaining);
 	if(tmpPktCount > bytesRemaining) {
+		/*
+		for(int i=0;i<bytesRemaining;++i) {
+			imageBuffer.push_back(tmpPktBuffer[i]);
+		}
+		*/
 		memcpy(&imageBuffer[pktBytesReceived-8], tmpPktBuffer, bytesRemaining);
 		removeBytes(bytesRemaining);
 		pktBytesReceived += bytesRemaining;
 		return findFooter();
 	} else {
+		/*
+		for(int i=0;i<tmpPktCount;++i) {
+			imageBuffer.push_back(tmpPktBuffer[i]);
+		}
+		*/
 		memcpy(&imageBuffer[pktBytesReceived-8], tmpPktBuffer, tmpPktCount);
 		pktBytesReceived += tmpPktCount;
 		tmpPktCount=0;
@@ -150,6 +167,7 @@ int collectData(void)
  */
 int findFooter(void)
 {
+	bool packetGood = false;
 	if(tmpPktCount < 4) {
 		/* if not enough bytes then return */
 		return PKT_BUSY;
@@ -160,17 +178,34 @@ int findFooter(void)
 		uint32_t val = *(uint32_t*)tmpPktBuffer;
 		if(val == footer) {
 			ROS_INFO_STREAM("footer found, pkt success!");
+			packetGood = true;
 		} else {
-			ROS_INFO_STREAM("footer invalid.  read "<< hex << val << " expected " << hex << footer << " pkt FAILED!");
+			ROS_INFO_STREAM("footer invalid.  read "<< hex << val << 
+				" expected " << hex << footer << " pkt FAILED!");
 		}
 	}
 	pktBytesReceived=0;
 	tmpPktCount = 0;
+	if(packetGood) {
+		processPacket();
+	}
 	return PKT_DONE;
 }
+ros::Publisher imagePub;
+int processPacket(void) 
+{
+	sensor_msgs::CompressedImage msg;
+	msg.data.assign(imageBuffer, imageBuffer+imageSize);
+	msg.format = "jpeg";
+	imagePub.publish(msg);
+}
 /*
-	 called when serial data arrives.  First append data to temporary buffer which may have old data from
-	 partial read last time.  then call the appropriate function based on state of packet.
+	 called when serial data arrives.  
+	 First append data to temporary buffer which may have old data from
+	 partial read last time.  
+	 Also important to copy to buffer since another serial read can 
+	 overwrite original buffer at any time
+	 then call the appropriate function based on state of packet.
  */
 int parse_pkt(uint8_t *data, size_t numBytes) 
 {
@@ -178,7 +213,7 @@ int parse_pkt(uint8_t *data, size_t numBytes)
 	tmpPktCount += numBytes;
 	if(pktBytesReceived == 0)  { 
 		return findPktStart();
-	} else if(pktBytesReceived == 4) { // expecting pkt size
+	} else if(pktBytesReceived == 4) { 
 		return findImageSize();
 	} else if(pktBytesReceived+8 < imageSize) {
 		return collectData();
@@ -201,6 +236,7 @@ int main(int argc, char** argv)
 
 	ros::Subscriber camera_sub = n.subscribe("camera/image/compressed",1000, 
 			cameraCallback);
+	imagePub = n.advertise<sensor_msgs::CompressedImage>("receivedImage/compressed", 10);
 
 	cout << "Opening " << port << " for serial com at " << baudrate << " baud\n";
 
