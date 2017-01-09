@@ -11,7 +11,7 @@ if [[ -z $ROS_IP ]] ; then
 else
 	echo "ROS_IP = $ROS_IP"
 fi
-if [[! -z $ROS_IP ]] ; then
+if [[ ! -z $ROS_IP ]] ; then
 	source ~/ros_catkin_ws/devel/setup.bash
 	roslaunch mast_pi_zero mast_pi_zero.launch name:=`hostname`
 fi
