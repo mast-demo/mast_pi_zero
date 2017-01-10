@@ -5,6 +5,8 @@ from geometry_msgs.msg import TransformStamped
 def talker():
 	rospy.init_node('vicon', anonymous=True)
 	rate = rospy.Rate(10)
+	websocket = rospy.get_param('websocket','192.168.1.26')
+	topic = rospy.get_param('vicon_topic','192.168.1.26')
 	try:
 		client = viconClient.viconClient("zero", "192.168.1.26")	
 		client.connect()

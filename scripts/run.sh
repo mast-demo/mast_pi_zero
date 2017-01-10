@@ -1,6 +1,5 @@
 #!/bin/bash
 #give network time to DHCP.  otherwise ROS_IP is empty and ROS will not work on network
-sleep 5s
 export ROS_IP=`hostname -I`
 if [[ -z $ROS_IP ]] ; then
 	echo "ROS_IP is empty, no network?"
