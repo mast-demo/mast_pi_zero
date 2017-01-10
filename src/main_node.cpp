@@ -18,6 +18,8 @@ int currentGoalIdx = 0;
 ros::Publisher cmdPub;
 #define ANGLE_DEADBAND 0.2
 #define DISTANCE_DEADBAND 0.1
+#define FORWARD_VEL 0.5
+#define ANGULAR_VEL 0.5
 
 void myPoseCallback(const geometry_msgs::TransformStamped::ConstPtr& msg)
 {
@@ -39,14 +41,14 @@ void myPoseCallback(const geometry_msgs::TransformStamped::ConstPtr& msg)
 	} else if(heading_error > ANGLE_DEADBAND) {
 		ROS_INFO("LEFT");
 		cmd.linear.x = 0.0;	
-		cmd.angular.z = 1.0;	
+		cmd.angular.z = ANGULAR_VEL;	
 	} else if(heading_error < -ANGLE_DEADBAND) {
 		ROS_INFO("RIGHT");
 		cmd.linear.x = 0.0;	
-		cmd.angular.z = -1.0;	
+		cmd.angular.z = -ANGULAR_VEL;	
 	} else {
 		ROS_INFO("FORWARD");
-		cmd.linear.x = 1.0;	
+		cmd.linear.x = FORWARD_VEL;	
 		cmd.angular.z = 0.0;	
 	}
 	cmdPub.publish(cmd);

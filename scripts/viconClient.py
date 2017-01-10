@@ -20,9 +20,10 @@ class viconClient(WebSocketClient):
         self.name = name
         self.websocket = websocket
         super(viconClient, self).__init__('ws://' + websocket + ':9090/')
-        self.poseTopic = '/vicon/Kamigami_Delta/Kamigami_Delta'
+        self.poseTopic = '/vicon/Kamigami_Alpha/Kamigami_Alpha'
         print "Connecting to " + websocket
         self.pub = rospy.Publisher('vicon', TransformStamped, queue_size=5)
+        self.skipFrames = 0
 
     def subscribe(self):
 #         self.send('raw\r\n\r\n')
@@ -38,6 +39,10 @@ class viconClient(WebSocketClient):
         print code, reason
 
     def received_message(self, m):
+        if self.skipFrames < 10:
+          self.skipFrames = self.skipFrames + 1
+          return
+        self.skipFrames = 0
         d=loads(str(m))
 #        print d['op']
         if d['op'] == 'service_response':
