@@ -8,6 +8,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   cv_bridge
+  geometry_msgs
+  rospy
+  sensor_msgs
+  std_msgs
 )
 find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
@@ -106,6 +110,7 @@ include_directories(
 add_executable(main_node src/main_node.cpp)
 add_executable(serial_node src/serial_node.cpp)
 #add_executable(motor_node src/motor_node.cpp)
+add_executable(leader_node src/leader_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -123,6 +128,10 @@ target_link_libraries(serial_node
 #target_link_libraries(motor_node
 #   ${catkin_LIBRARIES}
 #)
+target_link_libraries(leader_node
+    ${catkin_LIBRARIES}
+    serial
+)
 
 #############
 ## Install ##

@@ -30,13 +30,13 @@ def callback(data):
 	elif data.angular.z < -1.0:
 		data.angular.z = -1.0
 	if data.linear.x > 0.01:
-		pzm.forward(data.linear.x * 50)
+		pzm.forward(data.linear.x * 80)
 	elif data.linear.x < -0.01:
-		pzm.reverse(-data.linear.x * 50)
+		pzm.reverse(-data.linear.x * 80)
 	elif data.angular.z > 0:
-		pzm.spinLeft(data.angular.z * 50)
+		pzm.spinLeft(data.angular.z * 95)
 	elif data.angular.z < 0:
-		pzm.spinRight(-data.angular.z * 50)
+		pzm.spinRight(-data.angular.z * 95)
 
 def timerCallback(event):
 	global watchdogCount

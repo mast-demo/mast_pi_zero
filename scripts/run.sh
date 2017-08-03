@@ -1,5 +1,7 @@
 #!/bin/bash
 #give network time to DHCP.  otherwise ROS_IP is empty and ROS will not work on network
+# temporaro=illy just ext during development.  comment this out to auto launch
+exit 0
 export ROS_IP=`hostname -I`
 if [[ -z $ROS_IP ]] ; then
 	echo "ROS_IP is empty, no network?"
