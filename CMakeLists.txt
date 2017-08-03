@@ -109,7 +109,7 @@ include_directories(
 ## Declare a cpp executable
 add_executable(main_node src/main_node.cpp)
 add_executable(serial_node src/serial_node.cpp)
-add_executable(serial_motor src/serial_motor_node.cpp)
+add_executable(serial_motor_node src/serial_motor_node.cpp)
 #add_executable(motor_node src/motor_node.cpp)
 add_executable(leader_node src/leader_node.cpp)
 

@@ -1,7 +1,7 @@
 /******************
 	node to handle onboard serial port
-  to talk to SparkFun Serial Controller Motor Driver ROB 13911
-  motor control board
+	to talk to SparkFun Serial Controller Motor Driver ROB 13911
+	motor control board
 
  ******************/
 
@@ -20,32 +20,32 @@ serial::Serial *serial_port;
 
 void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
-  float v = msg->linear.x;
-  float omega = msg->angular.z;
-  if(omgea < 0.01) {
-    vl = vr = v;
-  } else {
-    float r0 = v/omega;
-    float rl = r0 - DS;
-    float rr = r0 + DS;
-    vl = v * (rl/r0);
-    vr = v * (rr/r0);
-  }
-  int ml = vl / MAX_VEL;
-  int mr = vr / MAX_VEL;
-  char str[25];
-  if(ml>0) {
-    sprintf(str,"M0F%i\n",ml);
-  } else {
-    sprintf(str,"M0R%i\n",ml);
-  }
-  serial_port->write(str);
-  if(mr>0) {
-    sprintf(str,"M0F%i\n",mr);
-  } else {
-    sprintf(str,"M0R%i\n",mr);
-  }
-  serial_port->write(str);
+	float v = msg->linear.x;
+	float omega = msg->angular.z;
+	if(omgea < 0.01) {
+		vl = vr = v;
+	} else {
+		float r0 = v/omega;
+		float rl = r0 - DS;
+		float rr = r0 + DS;
+		vl = v * (rl/r0);
+		vr = v * (rr/r0);
+	}
+	int ml = vl*100.0 / MAX_VEL;
+	int mr = vr*100.0 / MAX_VEL;
+	char str[25];
+	if(ml>0) {
+		sprintf(str,"M0F%i\n",ml);
+	} else {
+		sprintf(str,"M0R%i\n",-ml);
+	}
+	serial_port->write(str);
+	if(mr>0) {
+		sprintf(str,"M0F%i\n",mr);
+	} else {
+		sprintf(str,"M0R%i\n",-mr);
+	}
+	serial_port->write(str);
 }
 
 int main(int argc, char** argv)
@@ -72,8 +72,8 @@ int main(int argc, char** argv)
 	} else {
 		cout << "Serial Port FAILED\n";
 	}
-  serial_port->write("M0I\n"); // invert M0 since it is on the left side
-  serial_port->write("E\n"); // enable motors
+	serial_port->write("M0I\n"); // invert M0 since it is on the left side
+	serial_port->write("E\n"); // enable motors
 
 	while(ros::ok()) {
 		ros::spinOnce();	
