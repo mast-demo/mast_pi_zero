@@ -18,10 +18,14 @@
       <param name="port" value="/dev/ttyAMA0" />
       <param name="skip" value="4" />
     </node>
-    <node name="motor" pkg="mast_pi_zero" type="serial_motor_node"/>
+    <node name="motor" pkg="mast_pi_zero" type="motor_node.py"/>
     <node name="vicon" pkg="mast_pi_zero" type="vicon_node.py"/>
     <node name="main" pkg="mast_pi_zero" type="main_node" output="screen"/>
     <node name="start_camera" pkg="rosservice" type="rosservice" args="call --wait camera/start_capture"/>
+
+    <node name="formation_control" pkg="mast_pi_zero" type="leader_node" output="screen">
+       <param name="follower" value="/tag_1"/>
+    </node>
 
 <!--
   </group>

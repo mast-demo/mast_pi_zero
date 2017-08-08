@@ -2,6 +2,9 @@
 	node to handle onboard serial port
 	to talk to SparkFun Serial Controller Motor Driver ROB 13911
 	motor control board
+	
+	Subscribes to cmd_vel Twist messages and produces the 
+	corresponding commands on the serial port
 
  ******************/
 
@@ -10,27 +13,56 @@
 #include <fstream>
 #include "ros/ros.h"
 #include "serial/serial.h"
+#include "geometry_msgs/Twist.h"
 
 using namespace std;
 serial::Serial *serial_port;
 // velocity for 100% effort. used to scale input from m/s to %
 #define MAX_VEL 1.0
 // distance from center to side point of contact to ground
-#define DS 0.03 
+#define DS 0.3 
+ros::Time lastCommandTime;
+ros::Duration watchDogLimit = ros::Duration(1.0);
+bool motorsEnabled = false;
+
+float limit(float val, float limit)
+{
+	if(val < -limit) return -limit;
+	if(val > limit) return limit;
+	return val;
+}
+void enableMotors(bool ena)
+{
+	if(ena) 
+	{
+		motorsEnabled = true;
+		serial_port->write("E\n");
+		ROS_INFO("enabling motors");
+	} 
+	else 
+	{
+		motorsEnabled = false;
+		serial_port->write("D\n");
+		ROS_INFO("disabling motors");
+	}
+}
 
 void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
+	if(!motorsEnabled) 
+	{
+		enableMotors(true);
+	}
 	float v = msg->linear.x;
 	float omega = msg->angular.z;
-	if(omgea < 0.01) {
-		vl = vr = v;
-	} else {
-		float r0 = v/omega;
-		float rl = r0 - DS;
-		float rr = r0 + DS;
-		vl = v * (rl/r0);
-		vr = v * (rr/r0);
-	}
+	float vl,vr;
+	float vl_turn, vr_turn;
+
+	vl_turn = -omega*DS;
+	vr_turn = -vl_turn;
+	vl = limit(v+vl_turn, MAX_VEL);
+	vr = limit(v+vr_turn, MAX_VEL);
+
 	int ml = vl*100.0 / MAX_VEL;
 	int mr = vr*100.0 / MAX_VEL;
 	char str[25];
@@ -39,13 +71,25 @@ void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
 	} else {
 		sprintf(str,"M0R%i\n",-ml);
 	}
+	ROS_INFO_STREAM(str);
 	serial_port->write(str);
 	if(mr>0) {
-		sprintf(str,"M0F%i\n",mr);
+		sprintf(str,"M1F%i\n",mr);
 	} else {
-		sprintf(str,"M0R%i\n",-mr);
+		sprintf(str,"M1R%i\n",-mr);
 	}
 	serial_port->write(str);
+	ROS_INFO_STREAM(str);
+	lastCommandTime = ros::Time::now();
+}
+void timerCallback(const ros::TimerEvent&)
+{
+	if( motorsEnabled && 
+		((ros::Time::now() - lastCommandTime)  > watchDogLimit ) )
+	{
+		ROS_INFO("cmd_vel timed out, stopping motors");
+		enableMotors(false);
+	}
 }
 
 int main(int argc, char** argv)
@@ -61,6 +105,7 @@ int main(int argc, char** argv)
 	private_node_handle.param("baudrate", baudrate, int(115200));
 
 	ros::Subscriber cmd_sub = n.subscribe("cmd_vel",1000, cmdCallback);
+	ros::Timer timer = n.createTimer(ros::Duration(0.2), timerCallback);
 
 	cout << "Opening " << port << " for serial com at " << baudrate << " baud\n";
 
@@ -73,7 +118,10 @@ int main(int argc, char** argv)
 		cout << "Serial Port FAILED\n";
 	}
 	serial_port->write("M0I\n"); // invert M0 since it is on the left side
-	serial_port->write("E\n"); // enable motors
+//	serial_port->write("E\n"); // enable motors
+	enableMotors(false);
+
+	lastCommandTime = ros::Time::now();
 
 	while(ros::ok()) {
 		ros::spinOnce();	
