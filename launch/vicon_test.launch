@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="name" default="pi"/>
+  <arg name="websocket" default="192.168.27.2"/>
+  <arg name="vicon_topic" default="/vicon/Kamagami_Alpha/Kamagami_Alpha"/>
+  <arg name="pose_topic" default="pose"/>
+    <node name="vicon" pkg="mast_pi_zero" type="vicon_node.py" output="screen">
+			<param name="name" value="$(arg name)"/>
+			<param name="websocket" value="$(arg websocket)"/>
+			<param name="vicon_topic" value="$(arg vicon_topic)"/>
+			<param name="pose_topic" value="$(arg pose_topic)"/>
+		</node>
+</launch>
