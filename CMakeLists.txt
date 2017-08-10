@@ -112,6 +112,7 @@ add_executable(serial_node src/serial_node.cpp)
 add_executable(serial_motor_node src/serial_motor_node.cpp)
 #add_executable(motor_node src/motor_node.cpp)
 add_executable(leader_node src/leader_node.cpp)
+add_executable(move_controller_node src/move_controller_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -138,6 +139,9 @@ target_link_libraries(leader_node
     serial
 )
 
+target_link_libraries(move_controller_node
+    ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
