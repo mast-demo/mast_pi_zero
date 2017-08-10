@@ -19,8 +19,7 @@ def talker():
 		print "Connection failed: " + str(e)
 		return
 
-	while not rospy.is_shutdown():
-		rate.sleep()
+	rospy.spin()
 
 if __name__ == '__main__':
   try:

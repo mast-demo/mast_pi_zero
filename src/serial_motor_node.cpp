@@ -123,8 +123,7 @@ int main(int argc, char** argv)
 
 	lastCommandTime = ros::Time::now();
 
-	while(ros::ok()) {
-		ros::spinOnce();	
-	}
+	ros::spin();	
+
 	return 0;
 }

@@ -23,21 +23,26 @@ publishes:
 using namespace std;
 vector<geometry_msgs::Pose> goals;
 int currentGoalIdx = 0;
+float linear_v = 1.7;
+float angular_v = 1.7;
 
 bool busy = false;
 ros::Publisher cmdPub;
 geometry_msgs::Pose goal;
 #define ANGLE_DEADBAND 0.2
+#define ANGLE_TURN_IN_PLACE 0.6
 #define DISTANCE_DEADBAND 0.1
-#define FORWARD_VEL 0.5
-#define ANGULAR_VEL 0.5
+#define FORWARD_VEL 1.0 
+#define ANGULAR_VEL 2.5
 
 void cancelCallback(const std_msgs::Empty::ConstPtr& msg)
 {
+	ROS_INFO("Cancelling Move command");
 	busy = false;
 }
 void goalCallback(const geometry_msgs::Pose::ConstPtr& msg)
 {
+	ROS_INFO("Recevied new goal");
 	if(busy == false) busy = true;
 	goal = *msg;
 }
@@ -59,18 +64,18 @@ void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 		busy = false;
 		cmd.linear.x = 0.0;	
 		cmd.angular.z = 0.0;	
-	} else if(heading_error > ANGLE_DEADBAND) {
+	} else if(heading_error > ANGLE_TURN_IN_PLACE) {
 		ROS_INFO("LEFT");
 		cmd.linear.x = 0.0;	
-		cmd.angular.z = ANGULAR_VEL;	
-	} else if(heading_error < -ANGLE_DEADBAND) {
+		cmd.angular.z = angular_v;	
+	} else if(heading_error < -ANGLE_TURN_IN_PLACE) {
 		ROS_INFO("RIGHT");
 		cmd.linear.x = 0.0;	
-		cmd.angular.z = -ANGULAR_VEL;	
+		cmd.angular.z = -angular_v;	
 	} else {
 		ROS_INFO("FORWARD");
-		cmd.linear.x = FORWARD_VEL;	
-		cmd.angular.z = 0.0;	
+		cmd.linear.x = linear_v;	
+		cmd.angular.z = heading_error;	
 	}
 	cmdPub.publish(cmd);
 }
@@ -83,6 +88,10 @@ int main(int argc, char** argv)
 	ros::Subscriber poseSub = n.subscribe("pose", 1, poseCallback); 
 	ros::Subscriber goalSub = n.subscribe("goal", 1, goalCallback); 
 	ros::Subscriber cancelSub = n.subscribe("cancel", 1, cancelCallback); 
+	ros::NodeHandle rn("~");
+	rn.param<float>("linear_v", linear_v, FORWARD_VEL);
+	rn.param<float>("angular_v", angular_v, ANGULAR_VEL);
+	ROS_INFO_STREAM("Linear_v = "<<linear_v<<" Angular_v = "<<angular_v);
 	ros::spin();	
 	return 0;
 }
