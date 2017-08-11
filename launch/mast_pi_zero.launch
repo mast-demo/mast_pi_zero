@@ -6,20 +6,21 @@
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <node name="main" pkg="mast_pi_zero" type="main_node"/>
 -->
-<!--
     <node name="raspicam" pkg="raspicam" type="raspicam_node">
       <param name="framerate" value="5"/>
       <param name="quality" value="20"/>
       <param name="width" value="430"/>
       <param name="height" value="270"/>
     </node>
--->
+    <node name="start_camera" pkg="rosservice" type="rosservice" args="call --wait camera/start_capture"/>
+<!--
     <node name="serial" pkg="mast_pi_zero" type="serial_node" >
       <param name="baudrate" value="1000000" />
       <param name="port" value="/dev/ttyAMA0" />
       <param name="skip" value="4" />
     </node>
-    <node name="start_camera" pkg="rosservice" type="rosservice" args="call --wait camera/start_capture"/>
+
+	-->
     <node name="motor" pkg="mast_pi_zero" type="serial_motor_node">
 		</node>
     <node name="vicon" pkg="mast_pi_zero" type="vicon_node.py" output="screen">
@@ -29,8 +30,8 @@
     <node name="main" pkg="mast_pi_zero" type="main_node" output="screen"/>
     <node name="move" pkg="mast_pi_zero" type="move_controller_node" 
 				output="screen">
-			<param name="linear_v" value="1.2"/>
-			<param name="angular_v" value="3.5"/>
+			<param name="linear_v" value="0.75"/>
+			<param name="angular_v" value="2.5"/>
 		</node>
 
 <!--

@@ -16,6 +16,7 @@ publishes:
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Empty.h"
+#include "std_msgs/Float32.h"
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 //#include <tf/transform_datatypes.h>
@@ -35,6 +36,16 @@ geometry_msgs::Pose goal;
 #define FORWARD_VEL 1.0 
 #define ANGULAR_VEL 2.5
 
+void linVelCallback(const std_msgs::Float32::ConstPtr& msg)
+{
+	linear_v = msg->data;
+	ROS_INFO("Changing linear velocity to %f", linear_v);
+}
+void angVelCallback(const std_msgs::Float32::ConstPtr& msg)
+{
+	angular_v = msg->data;
+	ROS_INFO("Changing angular velocity to %f",angular_v);
+}
 void cancelCallback(const std_msgs::Empty::ConstPtr& msg)
 {
 	ROS_INFO("Cancelling Move command");
@@ -58,6 +69,9 @@ void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 	float yaw   =atan2(2.0 * (q.z * q.w + q.x * q.y) , - 1.0 + 2.0 * (q.w * q.w + q.x * q.x));
 	ROS_INFO_STREAM(" myYaw = " << yaw);
 	float heading_error = heading - yaw;
+	while(heading_error > M_PI) heading_error-=2.0*M_PI;
+	while(heading_error < -M_PI) heading_error+=2.0*M_PI;
+
 	geometry_msgs::Twist cmd;
 	if(d < DISTANCE_DEADBAND) {
 		ROS_INFO("ARRIVED");
@@ -88,6 +102,8 @@ int main(int argc, char** argv)
 	ros::Subscriber poseSub = n.subscribe("pose", 1, poseCallback); 
 	ros::Subscriber goalSub = n.subscribe("goal", 1, goalCallback); 
 	ros::Subscriber cancelSub = n.subscribe("cancel", 1, cancelCallback); 
+	ros::Subscriber linVelSub = n.subscribe("linear_vel", 1, linVelCallback); 
+	ros::Subscriber angVelSub = n.subscribe("angular_vel", 1, angVelCallback); 
 	ros::NodeHandle rn("~");
 	rn.param<float>("linear_v", linear_v, FORWARD_VEL);
 	rn.param<float>("angular_v", angular_v, ANGULAR_VEL);
