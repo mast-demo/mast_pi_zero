@@ -15,6 +15,7 @@ def talker():
 	try:
 		client = viconClient.viconClient(name, websocket, viconTopic, poseTopic)	
 		client.connect()
+		print "Connected"
 	except Exception as e:
 		print "Connection failed: " + str(e)
 		return
