@@ -1,41 +1,10 @@
 /** \file 
  */
-#include "mast.h"
-#include "mast_ros/CheckConnection.h"
-#include <mast_ros/StorageControl.h>
+//#include <mast_ros/StorageControl.h>
 #include "Storage.h"
-void Storage::load(YAML::Node y)
-{
-  capacity = y["capacity"].as<double>();
-  used = y["used"].as<double>();
-}
-/*
-   bool Agent::startBag(void)
-   {
-   mast_ros::StorageControl srv;
-   srv.request.command = "start";
-   if(!storageClient.call(srv)) {
-   ROS_WARN_STREAM("Could not start recorder: "<<srv.response.ok);
-   bagOpen = false;
-   } else {
-   bagOpen = true;
-   }
-   }
-   bool Agent::stopBag(void)
-   {
-   bagOpen = false;
-   mast_ros::StorageControl srv;
-   srv.request.command = "stop";
-   if(!storageClient.call(srv)) {
-   ROS_WARN_STREAM("Could not stop recorder: "<<srv.response.ok);
-   } else {
-   bagOpen = false;
-   }
-   }
- */
 void Storage::imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-  if(isOpen) {
+  if(isOpen && recordEnable) {
     ros::Time t = ros::Time::now();
     bag.write("image", t, *msg);
     bag.write("pose", t, pose);
@@ -62,25 +31,24 @@ void Storage::close(void)
   if(isOpen) {
     bag.close();
     isOpen = false;
+		ROS_INFO_STREAM("Closing file");
   }
 }
-bool Storage::control(mast_ros::StorageControl::Request &req,
-    mast_ros::StorageControl::Response & res)
+void Storage::openCallback(const std_msgs::Bool::ConstPtr& msg)
 {
-  if(req.command == "start") {
+  if(msg->data) {
     open();
-    res.ok = true;
-    return true;
-  } else if(req.command == "stop") {
-    close();
-    res.ok = true;
-    return true;
   } else {
-    ROS_ERROR_STREAM(" Invalid Command "<<req.command);
-    res.ok = false;
-    return false;
+    close();
   }
 }
+
+void Storage::recordCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+	recordEnable = msg->data;
+	ROS_INFO_STREAM("Recording = "<<recordEnable);
+}
+
 void Storage::poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 {
   pose = *msg;
@@ -89,19 +57,16 @@ Storage::Storage(ros::NodeHandle _n)
 {
   n = _n; 
   ros::NodeHandle nh("~");
-  nh.param<std::string>("configFile", configFile, "config.yaml");
   nh.param<std::string>("imageTopic", imageTopic, "camera/image");
   nh.param<std::string>("poseTopic", poseTopic, "pose");
-  nh.param<std::string>("storageTopic", storageTopic, "storage");
+  nh.param<std::string>("openTopic", openTopic, "open");
+  nh.param<std::string>("recordTopic", recordTopic, "record");
   nh.param<std::string>("fileName", fileName, "rosfile");
-  nh.param<std::string>("filePath", filePath, "/tmp/");
+  nh.param<std::string>("filePath", filePath, ".");
   image_transport::ImageTransport it(n);
   sub = it.subscribe(imageTopic, 1, &Storage::imageCallback, this);
   poseSub = n.subscribe(poseTopic, 1, &Storage::poseCallback, this);
-  storagePub = n.advertise<std_msgs::Float32>(storageTopic,1);
-  controlSrv = n.advertiseService(
-      "storage_node/control", &Storage::control, this);
-  YAML::Node config = YAML::LoadFile(configFile);
-  load(config["storage"]);
-  ROS_INFO_STREAM("===================storage capacity = "<< capacity);
+  openSub = n.subscribe(openTopic, 1, &Storage::openCallback, this);
+  recordSub = n.subscribe(recordTopic, 1, &Storage::recordCallback, this);
+	recordEnable = isOpen = false;
 }

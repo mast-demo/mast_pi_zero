@@ -4,8 +4,6 @@
   publish the storage used
  */
 #include <ros/ros.h>
-#include "mast.h"
-#include <yaml-cpp/yaml.h>
 #include "Storage.h"
 int main(int argc, char **argv)
 {

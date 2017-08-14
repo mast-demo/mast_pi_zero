@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+	image_transport
+	rosbag
 )
 find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
@@ -55,11 +57,10 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
+#add_service_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+#   StorageControl.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -69,10 +70,10 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
+#generate_messages(
 #   DEPENDENCIES
 #   std_msgs
-# )
+#)
 
 ###################################
 ## catkin specific configuration ##
@@ -105,6 +106,9 @@ include_directories(
 # add_library(raspicam
 #   src/${PROJECT_NAME}/raspicam.cpp
 # )
+add_library(Storage
+  src/Storage.cpp
+)
 
 ## Declare a cpp executable
 add_executable(main_node src/main_node.cpp)
@@ -113,6 +117,7 @@ add_executable(serial_motor_node src/serial_motor_node.cpp)
 #add_executable(motor_node src/motor_node.cpp)
 add_executable(leader_node src/leader_node.cpp)
 add_executable(move_controller_node src/move_controller_node.cpp)
+add_executable(storage_node src/storage_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -123,6 +128,10 @@ target_link_libraries(main_node
    ${catkin_LIBRARIES}
    serial
 )
+target_link_libraries(storage_node
+   ${catkin_LIBRARIES}
+	 Storage
+)
 target_link_libraries(serial_node
    ${catkin_LIBRARIES}
    serial
@@ -131,6 +140,13 @@ target_link_libraries(serial_motor_node
    ${catkin_LIBRARIES}
    serial
 )
+#target_link_libraries(motor_node
+#   ${catkin_LIBRARIES}
+#)
+
+## Add cmake target dependencies of the executable/library
+## as an example, message headers may need to be generated before nodes
+# add_dependencies(raspicam_node raspicam_generate_messages_cpp)
 #target_link_libraries(motor_node
 #   ${catkin_LIBRARIES}
 #)
