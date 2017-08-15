@@ -38,9 +38,9 @@ geometry_msgs::Pose goal;
 #define DISTANCE_DEADBAND 0.3
 #define FORWARD_VEL 1.0 
 #define ANGULAR_VEL 2.5
-int n = 6;
-float xWaypoints [6] = {0.4,0,-0.4,0.5,0,-0.4};
-float yWaypoints [6] = {-0.9,-0.3,0.6,0.6,-0.3,-0.9};
+int n = 2;
+float xWaypoints [2] = {0,-0.4};
+float yWaypoints [2] = {-0.3,-0.9};
 int current = 0;
 
 void linVelCallback(const std_msgs::Float32::ConstPtr& msg)
