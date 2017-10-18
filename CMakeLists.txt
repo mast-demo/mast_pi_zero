@@ -14,8 +14,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 	image_transport
 	rosbag
+	robot_localization
 )
 find_package(OpenCV REQUIRED)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -97,7 +99,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${OpenCV_INCLUDE_DIRS})
+include_directories(include ${OpenCV_INCLUDE_DIRS} )
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
@@ -109,6 +111,7 @@ include_directories(
 add_library(Storage
   src/Storage.cpp
 )
+add_library(Adafruit_INA219 src/Adafruit_INA219.cpp)
 
 ## Declare a cpp executable
 add_executable(main_node src/main_node.cpp)
@@ -118,7 +121,8 @@ add_executable(serial_motor_node src/serial_motor_node.cpp)
 add_executable(leader_node src/leader_node.cpp)
 add_executable(move_controller_node src/move_controller_node.cpp)
 add_executable(storage_node src/storage_node.cpp)
-
+add_executable(i2c_motor_node src/i2c_motor_node.cpp)
+add_executable(i2c_current_node src/i2c_current_node.cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(raspicam_node raspicam_generate_messages_cpp)
@@ -139,6 +143,14 @@ target_link_libraries(serial_node
 target_link_libraries(serial_motor_node
    ${catkin_LIBRARIES}
    serial
+)
+target_link_libraries(i2c_motor_node
+	 ${catkin_LIBRARIES}
+	 #wiringPi
+)
+
+target_link_libraries(i2c_current_node
+	${catkin_LIBRARIES} Adafruit_INA219
 )
 #target_link_libraries(motor_node
 #   ${catkin_LIBRARIES}
@@ -205,3 +217,5 @@ target_link_libraries(move_controller_node
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+#add_definitions(-L/usr/lib/libwiringPi.so.2.44 -lwiringPi)

@@ -35,12 +35,12 @@ ros::Publisher stopFlagPub;
 geometry_msgs::Pose goal;
 #define ANGLE_DEADBAND 0.2
 #define ANGLE_TURN_IN_PLACE 0.6
-#define DISTANCE_DEADBAND 0.3
+#define DISTANCE_DEADBAND 0.25
 #define FORWARD_VEL 1.0 
 #define ANGULAR_VEL 2.5
-int n = 6;
-float xWaypoints [6] = {0.4,0,-0.4,0.5,0,-0.4};
-float yWaypoints [6] = {-0.9,-0.3,0.6,0.6,-0.3,-0.9};
+int n = 5;
+float xWaypoints [5] = {0,0,0,0.4,-0.4};
+float yWaypoints [5] = {-0.1,-0.1,0.5,0.5,0.5};
 int current = 0;
 
 void linVelCallback(const std_msgs::Float32::ConstPtr& msg)
@@ -78,9 +78,14 @@ void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 	float heading_error = heading - yaw;
 	
 	if ( heading_error < -3*M_PI/2 || heading_error > 3*M_PI/2 )
-	    heading_effort = -0.9*(2*M_PI - heading_error);
+	    heading_effort = -0.4*heading_error;
 	  else
 	    heading_effort = 1*heading_error;
+	if(heading_effort < -1.5)
+	heading_effort = -1.5;
+	if(heading_effort > 1.5)
+	heading_effort = 1.5;
+
 	ROS_INFO_STREAM(" heading_error = " << heading_error);
 	ROS_INFO_STREAM(" heading_effort = " << heading_effort);
 	//while(heading_error > M_PI) heading_error-=2.0*M_PI;
@@ -111,7 +116,7 @@ void callback(const ros::TimerEvent& event)
 std_msgs::Bool flag;
 flag.data = 1;
 stopFlagPub.publish(flag);
-ros::Duration(3).sleep();
+ros::Duration(2).sleep();
 flag.data = 0;
 stopFlagPub.publish(flag);
 }
@@ -130,7 +135,7 @@ int main(int argc, char** argv)
 	rn.param<float>("linear_v", linear_v, FORWARD_VEL);
 	rn.param<float>("angular_v", angular_v, ANGULAR_VEL);
 	ROS_INFO_STREAM("Linear_v = "<<linear_v<<" Angular_v = "<<angular_v);
-	ros::Timer timer = n.createTimer(ros::Duration(5), callback);
+	ros::Timer timer = n.createTimer(ros::Duration(2), callback);
 	ros::spin();	
 	return 0;
 }
