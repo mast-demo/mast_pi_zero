@@ -100,7 +100,7 @@ class INA219_0x40:
 		self.address = address
 		self.debug = debug
 		
-		self.ina219SetCalibration_16V_400mA()
+		self.ina219SetCalibration_32V_2A() #16V_400mA()
 	
 	def twosToInt(self, val, len):
 		# Convert twos compliment to integer
@@ -289,7 +289,7 @@ class INA219_0x41:
 		self.address = address
 		self.debug = debug
 		
-		self.ina219SetCalibration_16V_400mA()
+		self.ina219SetCalibration_32V_2A() #16V_400mA()
 	
 	def twosToInt(self, val, len):
 		# Convert twos compliment to integer

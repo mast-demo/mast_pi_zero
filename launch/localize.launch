@@ -16,51 +16,31 @@
 
     <node name="start_camera" pkg="rosservice" type="rosservice" args="call --wait camera/start_capture"/>
 
-<!--
-    <node name="serial" pkg="mast_pi_zero" type="serial_node" >
-      <param name="baudrate" value="1000000" />
-      <param name="port" value="/dev/ttyAMA0" />
-      <param name="skip" value="4" />
-    </node>
-
-		-->
-		<!-- REMOVED TO ALLOW FOR I2C motor node
-    <node name="motor" pkg="mast_pi_zero" type="serial_motor_node">
-		</node>
-		-->
-
 		<node name="motor" pkg="mast_pi_zero" type="i2c_motor_node" output="screen">
-			<param name="P_r" value="-0.041"/>
-			<param name="P_l" value="-0.05"/>
+			<param name="P_r" value="0.041"/>
+			<param name="P_l" value="0.05"/>
 			<param name="D_r" value="0"/>
 			<param name="D_l" value="0"/>
 		</node>
 
 		<node name="current_sense" pkg="mast_pi_zero" type="ina219_example.py" output="screen"/>
 		
-		<!--<node name="current_sense" pkg="mast_pi_zero" type="i2c_current_node" output="screen"/>-->
-
 		<node name="imu" pkg="mast_pi_zero" type="imu.py" output="screen"/>
 
+<!--
     <node name="vicon" pkg="mast_pi_zero" type="vicon_node.py" output="screen">
   		<param name="websocket" value="192.168.1.6"/>
 			<param name="name" value="$(arg name)"/>
 		</node>
-<!--
-    <node name="main" pkg="mast_pi_zero" type="main_node" output="screen"/>
 -->
-    <node name="move" pkg="mast_pi_zero" type="move_controller_node" 
+<!--    
+		<node name="move" pkg="mast_pi_zero" type="move_controller_node" 
 				output="screen">
 			<param name="linear_v" value="0.5"/>
 			<param name="P" value="1.5"/>
-			<!--
-			<param name="nWaypoints" value="5"/>
-			<param name="xWaypoints" value="[0.5,-0.5,0.5,-0.5,0.5]"/>
-			<param name="yWaypoints" value="[-0.9,-0.9,-0.9,-0.9,-0.9]"/>
-			-->
 		</node>
+-->
 
-		<!--<include file="$(find robot_pose_ekf)/robot_pose_ekf.launch"/>-->
 		<node pkg="robot_localization" type="ekf_localization_node" name="ekf_se">
 			<rosparam command="load" file="$(find robot_localization)/params/ekf_template.yaml" />
 			<param name="frequency" value="10"/>
@@ -74,17 +54,4 @@
 			<!--IMU data is received from BNO055 IMU Sensor.  This provides Angular Rates: Roll_dot, Pitch_dot, Theta_dot Linear Accelerations: X_dot_dot Y_dot_dot Z_dot_dot Angles: Roll, Pitch, Yaw.  Relevant states are Theta_dot, X_dot_dot, Y_dot_dot, and Yaw-->
 			<rosparam param="imu0_config">[false, false, false,     false, false, true,       false, false, false,       false,false, true,         false, false, false]</rosparam>		
 			</node>														
-		<!--<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf" output="screen">
-			<param name="output_frame" value="odom"/>
-			<param name="freq" value="30.0"/>
-			<param name="debug" value="true"/>
-			<param name="sensor_timeout" value="1.0"/>
-			<param name="odom_used" value="true"/>
-			<param name="imu_used" value = "true"/>
-			<param name="vo_used" value="false"/>
-		</node>
--->
-<!--
-  </group>
--->
 </launch>

@@ -20,14 +20,15 @@ def talker():
 	pub_r = rospy.Publisher('VI_Sense/right', Vector3, queue_size=10)
 	pub_l = rospy.Publisher('VI_Sense/left', Vector3, queue_size=10)
 	pub_odom = rospy.Publisher('odom',Odometry, queue_size=10)
-
+	pub_w = rospy.Publisher('w', Vector3, queue_size=10)
+	
 	x = 0
 	y = 0
 	theta = 0
 	
 
 	rospy.init_node('INA_talker', anonymous=True)
-	rate = rospy.Rate(50)
+	rate = rospy.Rate(30)#50
 	
 	while not rospy.is_shutdown():
 		#current_time = rospy.Time.now()
@@ -39,7 +40,7 @@ def talker():
 		r_current = ina_r.getCurrent_mA()
 		r_loadV = r_busV + (r_shuntV/1000)
 
-		msg = Vector3(r_shuntV, r_busV, r_current)
+		msg = Vector3(r_loadV, r_busV, r_current)
 		pub_r.publish(msg)
 
 		#result_l = ina_l.getBusVoltage_V()
@@ -47,23 +48,31 @@ def talker():
 		l_busV = ina_l.getBusVoltage_V()
 		l_current = ina_l.getCurrent_mA()
 		l_loadV = l_busV + (l_shuntV/1000)
-		msg2 = Vector3(l_shuntV, l_busV, l_current)
+		
+		msg2 = Vector3(l_loadV, l_busV, l_current)
 		pub_l.publish(msg2)
 		
-		if l_loadV > 1 or r_loadV > 1:
-			velocity_gain = 0.5 #Assuming the legs map to half of the efficiency of wheels
+		#if l_loadV > 0.1 or r_loadV > 0.1:
+		velocity_gain = 1.2 #Assuming the legs map to a certain efficiency of wheels
 			
-			#Calculate and Publish odometry
-			R = 0.01 #10mm radius
-			L = 0.1 #100mm length between legs
-
-			w_r = 753*(r_loadV - 3.5*r_current)/60 #rev/sec
-			w_r = w_r*2*3.14159 #rad/s
-			w_l = 753*(l_loadV - 3.5*l_current)/60 #rev/sec
-			w_l = w_l*2*3.14159 #rad/s
+		#Calculate and Publish odometry
+		R = 0.01 #10mm radius
+		L = 0.1 #100mm length between legs
+		kb = 0.011 #V/rad/s electromotive force constant (including the gear train and legs) kb = (V-IR)/215 where V = 3.4581 and I = .3151
+		w_r = (r_busV - 3.5*r_current/1000)/kb
+		w_l = (l_busV - 3.5*l_current/1000)/kb
+		#w_r = 680*(r_busV - 3.5*r_current/1000)/60 #rev/sec 753
+		#w_r = w_r*2*3.14159 #rad/s
+		#w_l = 680*(l_busV - 3.5*l_current/1000)/60 #rev/sec
+		#w_l = w_l*2*3.14159 #rad/s
 		
-			dx = velocity_gain*R/2*(w_r+w_l)*cos(theta)
-			dy = velocity_gain*R/2*(w_r+w_l)*sin(theta)
+		msg_w = Vector3(w_r,w_l,rospy.get_time())  #w_r = w_l & w_l = w_r (These were flipped)
+		pub_w.publish(msg_w)
+
+		if l_busV > 2.7 or r_busV > 2.7:	#0.1 need to find out min voltage to move
+			#Should be in robot frame of reference
+			dx = velocity_gain*R/2*(w_r+w_l)*cos(theta) #Should this just be average velocity?
+			dy = velocity_gain*R/2*(w_r+w_l)*sin(theta) #Do not need to report this to Kalman
 			dtheta = velocity_gain*R/L*(w_r-w_l)
 		
 			D = 0.06 #6cm from center of mass (between mid legs) to front of robot (D_r + D_l)/2
